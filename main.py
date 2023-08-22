@@ -115,10 +115,7 @@ class Object:
                     imageRect.y - camera.y + (HEIGHT/2)))
                     #screen.blit(image,Vector2(self.pos.x-camera.x+(WIDTH/2)-(camera.focus.size.x/2),self.pos.y-camera.y+(HEIGHT/2)-(camera.focus.size.y/2)))
                 if self.animate == True:
-                    if self.rect().collidepoint(ScreenToWorldPoint(Vector2(pygame.mouse.get_pos()[0],pygame.mouse.get_pos()[1]),camera)):
-                        image = pygame.transform.flip(pygame.image.load(f'Assets/{self.animations[self.animation][self.frame]}').convert(),bool(self.flipImage.x),bool(self.flipImage.y))
-                    else:
-                        image = pygame.transform.flip(pygame.image.load(f'Assets/{self.animations[self.animation][self.frame]}').convert_alpha(),bool(self.flipImage.x),bool(self.flipImage.y))
+                    image = pygame.transform.flip(pygame.image.load(f'Assets/{animations[self.animation][self.frame]}').convert_alpha(),bool(self.flipImage.x),bool(self.flipImage.y))
                     image = pygame.transform.rotate(image,self.rotation)
                     imageRect = image.get_rect(center = self.pos)
                     screen.blit(image,Vector2(
@@ -206,6 +203,20 @@ class Cactus(Entity):
         self.newAnimation(("cactus-0-0.png","cactus-0-1.png","cactus-0-2.png","cactus-0-3.png"))
         self.setAnimation(("cactus-1-0.png","cactus-1-1.png","cactus-1-2.png","cactus-1-3.png"))
         cacti.append(self)
+        self.target = None
+        self.cooldown = 150
+
+    def Shoot(self):
+        self.cooldown -= 1
+        if player.rect().colliderect(pygame.Rect(self.pos.x-128,self.pos.y-128,288,288)):
+            self.target = player
+        else:
+            self.target = None
+        if self.target and self.cooldown < 1:
+            self.setAnimation(1)
+            self.cooldown = 150
+            Projectile(Vector2(self.pos.x+9,self.pos.y+19),self.target.center(),Vector2(11,6),"cactus-spike.png","cactus",10,rotation=math.atan2(self.target.center().x-self.pos.x+9,self.target.center().y-self.pos.y+19))
+
 
 
 projectiles = []
@@ -343,7 +354,9 @@ while True:
             player.flipImage = Vector2()
 #Cacti animation controller
     for cactus in cacti:
-        cactus.setAnimation(0)
+        cactus.Shoot()
+        if cactus.animation == 1 and cactus.frame == 3:
+            cactus.setAnimation(0)
 #Gun code
     gun.pos = player.pos
     #Rotate the gun
