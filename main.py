@@ -78,6 +78,10 @@ def DrawUI():
         i+=1
         screen.blit(bullet,Vector2(WIDTH-(i*7)-10,10))
 
+def clip(img,pos,size):
+    newImg = pygame.surface.Surface((size.x,size.y),pygame.SRCALPHA)
+    newImg.blit(img,Vector2(-pos.x,-pos.y))
+    return newImg
 
 objects = []
 class Object:
@@ -103,7 +107,7 @@ class Object:
         self.flipImage = Vector2()
         objects.append(self)
 
-    def rect(self): #Player rect should be a function to prevent redundant GetNewRect() calls
+    def rect(self):
         return pygame.Rect(self.pos.x,self.pos.y,self.size.x,self.size.y)
 
     def Draw(self,camera):
@@ -221,8 +225,6 @@ class Cactus(Entity):
             self.cooldown = 150
             Projectile(Vector2(self.pos.x+9,self.pos.y+19),self.target.center(),Vector2(11,6),"cactus-spike.png","cactus",10,rotation=math.atan2(self.target.center().x-self.pos.x+9,self.target.center().y-self.pos.y+19))
 
-
-
 projectiles = []
 class Projectile:
     def __init__(self,pos,target,size,color,type,damage,rotation=0,flipImage=False):
@@ -271,7 +273,6 @@ class Projectile:
                             obj.health -= self.damage
                             projectiles.remove(self)
                             
-
 class Camera(pygame.math.Vector2):
     def __init__(self,screenSize,focus,x=0,y=0):
         super().__init__(x,y)
@@ -280,6 +281,34 @@ class Camera(pygame.math.Vector2):
 
     def rect(self):
         return pygame.Rect(camera.x-(self.screenSize.x/2)+(self.focus.size.x/2),camera.y-(self.screenSize.y/2)+(self.focus.size.y/2),self.screenSize.x,self.screenSize.y)
+
+class Font:
+    def __init__(self,path):
+        self.spacing = 1
+        self.characterOrder = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '.', '-', ',', ':', '+', "'", '!', '?', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '(', ')', '/', '_', '=', '\\', '[', ']', '*', '"', '<', '>', ';']
+        fontImg = pygame.image.load(path).convert_alpha()
+        currentCharWidth = 0
+        self.characters = {}
+        characterCount = 0
+        for x in range(fontImg.get_width()):
+            c = fontImg.get_at((x,0))
+            if c[0] == 127:
+                charImg = clip(fontImg,Vector2(x-currentCharWidth,0),Vector2(currentCharWidth,fontImg.get_height()))
+                self.characters[self.characterOrder[characterCount]] = charImg
+                characterCount += 1
+                currentCharWidth = 0
+            else:
+                currentCharWidth += 1
+        self.spaceWidth = self.characters['a'].get_width()
+
+    def Render(self,text,pos,scale=1):
+        x = 0
+        for char in text:
+            if char != ' ':
+                screen.blit(pygame.transform.scale(self.characters[char],(self.characters[char].get_size()[0]*scale,self.characters[char].get_size()[1]*scale)),Vector2((pos.x+x)*scale,pos.y))
+                x += self.characters[char].get_width() + self.spacing
+            else:
+                x += self.spacing + self.spaceWidth
 
 allLists = [objects,entities,cacti,projectiles]
 
