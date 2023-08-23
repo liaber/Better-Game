@@ -1,0 +1,1 @@
+pygame.image.load(f'Assets/{self.name}-{self.animation}-{self.frame}.png')

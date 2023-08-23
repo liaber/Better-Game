@@ -31,6 +31,9 @@ def DrawAll():
 def ScreenToWorldPoint(screenPoint,camera):
     return Vector2(screenPoint.x-camera.x+(WIDTH/2)-(camera.focus.size.x/2),screenPoint.y-camera.y+(HEIGHT/2)-(camera.focus.size.y/2))
 
+def WorldToScreenPoint(screenPoint,camera):
+    return Vector2(screenPoint.x+camera.x-(WIDTH/2)+(camera.focus.size.x/2),screenPoint.y+camera.y-(HEIGHT/2)+(camera.focus.size.y/2))
+
 def ScreenToWorldRect(rect,camera):
     pos = Vector2(rect.x,rect.y)
     pos = ScreenToWorldPoint(pos, camera)
@@ -62,7 +65,7 @@ def createMap(map):
             if tile == "2":
                 Object(Vector2(x*32,y*32),Vector2(32,32),"sand-bottom.png",False,True,"sand")
             if tile == "C":
-                Cactus(Vector2(x*32,y*32),Vector2(20,32),"cactus-0-0.png",False,False,"sand",animate=True)
+                Cactus(Vector2(x*32,y*32),Vector2(20,32),"cactus-0-0.png",False,False,"cactus",animate=True)
             x+=1
         y+=1
 
@@ -115,7 +118,8 @@ class Object:
                     imageRect.y - camera.y + (HEIGHT/2)))
                     #screen.blit(image,Vector2(self.pos.x-camera.x+(WIDTH/2)-(camera.focus.size.x/2),self.pos.y-camera.y+(HEIGHT/2)-(camera.focus.size.y/2)))
                 if self.animate == True:
-                    image = pygame.transform.flip(pygame.image.load(f'Assets/{animations[self.animation][self.frame]}').convert_alpha(),bool(self.flipImage.x),bool(self.flipImage.y))
+                    #image = pygame.transform.flip(pygame.image.load(f'Assets/{self.animations[self.animation][self.frame]}').convert_alpha(),bool(self.flipImage.x),bool(self.flipImage.y))
+                    image = pygame.transform.flip(pygame.image.load(f'Assets/{self.name}-{self.animation}-{self.frame}.png').convert_alpha(),bool(self.flipImage.x),bool(self.flipImage.y))
                     image = pygame.transform.rotate(image,self.rotation)
                     imageRect = image.get_rect(center = self.pos)
                     screen.blit(image,Vector2(
@@ -201,7 +205,7 @@ class Cactus(Entity):
     def __init__(self,pos,size,color,doPhysics,collisions,name,health=20,velo=Vector2(),layer=1,rotation=0,animate=False,animations=[]):
         super().__init__(pos,size,color,doPhysics,collisions,name,health,velo,layer,rotation,animate,animations)
         self.newAnimation(("cactus-0-0.png","cactus-0-1.png","cactus-0-2.png","cactus-0-3.png"))
-        self.setAnimation(("cactus-1-0.png","cactus-1-1.png","cactus-1-2.png","cactus-1-3.png"))
+        self.newAnimation(("cactus-1-0.png","cactus-1-1.png","cactus-1-2.png","cactus-1-3.png"))
         cacti.append(self)
         self.target = None
         self.cooldown = 150
@@ -265,6 +269,7 @@ class Projectile:
                     if not obj in cacti:
                         if obj in entities:
                             obj.health -= self.damage
+                            projectiles.remove(self)
                             
 
 class Camera(pygame.math.Vector2):
@@ -281,8 +286,8 @@ allLists = [objects,entities,cacti,projectiles]
 player = Player(Vector2(190,900),Vector2(20,32),"player-0-0.png",True,True,"player",animate=True,layer=2)
 player.newAnimation(("player-0-0.png","player-0-1.png","player-0-2.png","player-0-3.png"))
 player.newAnimation(("player-1-0.png","player-1-1.png","player-1-2.png","player-1-3.png"))
-player.newAnimation(("player-2-0.png","player-2-0.png"))
-player.newAnimation(("player-3-0.png","player-3-0.png"))
+player.newAnimation(("player-2-0.png","player-2-1.png"))
+player.newAnimation(("player-3-0.png","player-3-1.png"))
 
 gun = Object(Vector2(0,0),Vector2(40,10),"gun.png",False,False,"gun",layer=3)
 
@@ -318,7 +323,6 @@ while True:
                     if obj.frame > len(obj.animations[obj.animation])-1:
                         obj.frame = 0
                 
-
     keys = pygame.key.get_pressed()
     if keys[pygame.K_UP] or keys[pygame.K_w]:
         if player.grounded():
