@@ -27,6 +27,8 @@ def DrawAll():
                 obj.Draw(camera)
     for projectile in projectiles:
         projectile.Draw(camera)
+    for collectible in collectibles:
+        collectible.Draw(camera)
 
 def ScreenToWorldPoint(screenPoint,camera):
     return Vector2(screenPoint.x-camera.x+(WIDTH/2)-(camera.focus.size.x/2),screenPoint.y-camera.y+(HEIGHT/2)-(camera.focus.size.y/2))
@@ -186,6 +188,7 @@ class Entity(Object):
 
     def Update(self):
         if self.health <= 0:
+            Collectible(self.center(),Vector2(6,8),"Assets/bullet-icon.png","bullet",2)
             for list in allLists:
                 if self in list:
                     list.remove(self)
@@ -272,7 +275,31 @@ class Projectile:
                         if obj in entities:
                             obj.health -= self.damage
                             projectiles.remove(self)
-                            
+
+collectibles = []
+class Collectible:
+    def __init__(self,pos,size,image,name,amount):
+        self.pos = pos
+        self.size = size
+        self.name = name
+        self.amount = amount
+        self.image = pygame.image.load(image).convert_alpha()
+        collectibles.append(self)
+
+    def rect(self):
+        return pygame.Rect(self.pos.x,self.pos.y,self.size.x,self.size.y)
+
+    def Draw(self,camera):
+        screen.blit(self.image,Vector2(self.pos.x-camera.x+(WIDTH/2)-(camera.focus.size.x/2),self.pos.y-camera.y+(HEIGHT/2)-(camera.focus.size.y/2)))
+        Font("Assets/font.png").Render(str(self.amount),ScreenToWorldPoint(self.pos,camera)-Vector2(2,2))
+
+    def Update(self):
+        if self.name == "bullet":
+            if self.rect().colliderect(player.rect()):
+                player.bullets += self.amount
+                collectibles.remove(self)
+
+
 class Camera(pygame.math.Vector2):
     def __init__(self,screenSize,focus,x=0,y=0):
         super().__init__(x,y)
@@ -310,7 +337,7 @@ class Font:
             else:
                 x += self.spacing + self.spaceWidth
 
-allLists = [objects,entities,cacti,projectiles]
+allLists = [objects,entities,cacti,projectiles,collectibles]
 
 player = Player(Vector2(190,900),Vector2(20,32),"player-0-0.png",True,True,"player",animate=True,layer=2)
 player.newAnimation(("player-0-0.png","player-0-1.png","player-0-2.png","player-0-3.png"))
@@ -407,6 +434,9 @@ while True:
     DrawAll()
 
     DrawUI()
+#Collectibles
+    for collectible in collectibles:
+        collectible.Update()
 #Cursor
     pygame.mouse.set_visible(False)
     screen.blit(pygame.image.load("Assets/cursor.png").convert_alpha(),Vector2(pygame.mouse.get_pos()[0]-4.5,pygame.mouse.get_pos()[1]-4.5))
